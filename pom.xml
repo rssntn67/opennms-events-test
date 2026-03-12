@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.opennms.plugins</groupId>
+    <artifactId>opennms-plugin-integration-test</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>OpenNMS Plugin Integration Tests (Testcontainers)</name>
+    <description>
+        Integration test suite that uses Testcontainers to spin up OpenNMS + PostgreSQL,
+        deploy a KAR plugin, send SNMP traps, and verify alarm creation via REST API.
+    </description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Dependency versions -->
+        <testcontainers.version>1.20.4</testcontainers.version>
+        <junit.version>5.11.3</junit.version>
+        <rest-assured.version>5.5.0</rest-assured.version>
+        <awaitility.version>4.2.2</awaitility.version>
+        <jackson.version>2.18.1</jackson.version>
+        <snmp4j.version>3.8.2</snmp4j.version>
+        <slf4j.version>2.0.16</slf4j.version>
+        <logback.version>1.5.12</logback.version>
+
+        <!-- Plugin configuration -->
+        <opennms.image>opennms/horizon</opennms.image>
+        <opennms.version>33.0.5</opennms.version>
+        <postgres.image>postgres:15-alpine</postgres.image>
+
+        <!-- Skip unit tests, only run integration tests -->
+        <skipUTs>true</skipUTs>
+    </properties>
+
+    <dependencies>
+        <!-- ── JUnit 5 ──────────────────────────────────────────── -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ── Testcontainers ───────────────────────────────────── -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ── REST Assured (for OpenNMS REST API calls) ────────── -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${rest-assured.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ── Awaitility (polling / waiting) ───────────────────── -->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ── Jackson (JSON parsing) ───────────────────────────── -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ── SNMP4J (send traps from Java) ────────────────────── -->
+        <dependency>
+            <groupId>org.snmp4j</groupId>
+            <artifactId>snmp4j</artifactId>
+            <version>${snmp4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ── Logging ──────────────────────────────────────────── -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Surefire for unit tests (skipped by default) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <skipTests>${skipUTs}</skipTests>
+                </configuration>
+            </plugin>
+
+            <!-- Failsafe for integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                        <include>**/*IntegrationTest.java</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <opennms.image>${opennms.image}:${opennms.version}</opennms.image>
+                        <postgres.image>${postgres.image}</postgres.image>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Quick profile: skip everything except integration tests -->
+        <profile>
+            <id>integration</id>
+            <properties>
+                <skipUTs>true</skipUTs>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>
