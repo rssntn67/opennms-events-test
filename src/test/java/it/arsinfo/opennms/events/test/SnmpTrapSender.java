@@ -1,4 +1,4 @@
-package org.opennms.integrationtest;
+package it.arsinfo.opennms.events.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package org.opennms.integrationtest;
+package it.arsinfo.opennms.events.test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.*;
